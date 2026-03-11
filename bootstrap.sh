@@ -161,7 +161,21 @@ apply_path "" deploy/applications
 if [[ "$INSTALL_TEKTON_RESOURCES" == "true" ]]; then
   if oc get crd pipelines.tekton.dev >/dev/null 2>&1; then
     ensure_project "$CICD_NS"
-    apply_path "$CICD_NS" deploy/tekton
+    log "Applying Tekton base resources into namespace $CICD_NS"
+    apply_path "$CICD_NS" deploy/tekton/01-serviceaccount.yaml
+    apply_path "$CICD_NS" deploy/tekton/10-task-git-clone.yaml
+    apply_path "$CICD_NS" deploy/tekton/20-task-validate-overlay.yaml
+    apply_path "$CICD_NS" deploy/tekton/30-task-update-release.yaml
+    apply_path "$CICD_NS" deploy/tekton/40-task-commit-push.yaml
+    apply_path "$CICD_NS" deploy/tekton/50-pipeline-promotion.yaml
+    if [[ -f deploy/tekton/pvc.yaml ]]; then
+      apply_path "$CICD_NS" deploy/tekton/pvc.yaml
+    elif [[ -f deploy/tekton/05-pvc.yaml ]]; then
+      apply_path "$CICD_NS" deploy/tekton/05-pvc.yaml
+    elif [[ -f deploy/tekton/90-pvc.yaml ]]; then
+      apply_path "$CICD_NS" deploy/tekton/90-pvc.yaml
+    fi
+    log "Skipping example PipelineRuns during bootstrap. Use oc create -f deploy/tekton/examples/... or tkn pipeline start when you want to run a promotion."
   else
     warn "Tekton CRDs not found. Skipping deploy/tekton installation."
   fi

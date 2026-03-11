@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
-  generateName: promote-test-to-prod-
+  generateName: promote-dev-to-test-
 spec:
   pipelineRef:
     name: promote-demo-release
@@ -9,13 +9,13 @@ spec:
     serviceAccountName: pipeline
   params:
     - name: git-url
-      value: https://github.com/h8x0rd/ocp-gitops-pipelines.git
+      value: https://github.com/your-org/ocp-mqtt-demo.git
     - name: git-revision
       value: main
     - name: source-environment
-      value: test
+      value: dev
     - name: target-environment
-      value: prod
+      value: test
     - name: promoted-by
       value: demo-operator
   workspaces:

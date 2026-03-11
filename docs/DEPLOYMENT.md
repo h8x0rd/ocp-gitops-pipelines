@@ -34,7 +34,7 @@ Into `mqtt-demo-cicd` if Tekton is present:
 - `PersistentVolumeClaim/tekton-workspace`
 - Tekton `Task` resources
 - `Pipeline/promote-demo-release`
-- example `PipelineRun` YAMLs
+- example `PipelineRun` YAMLs under `deploy/tekton/examples/`
 
 ## Git credentials for Tekton push-back
 
@@ -196,6 +196,8 @@ deploy/tekton/20-task-validate-overlay.yaml
 deploy/tekton/30-task-update-release.yaml
 deploy/tekton/40-task-commit-push.yaml
 deploy/tekton/50-pipeline-promotion.yaml
+deploy/tekton/examples/60-pipelinerun-dev-to-test-example.yaml
+deploy/tekton/examples/61-pipelinerun-test-to-prod-example.yaml
 ```
 
 ## Troubleshooting

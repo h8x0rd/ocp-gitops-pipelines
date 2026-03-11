@@ -9,7 +9,7 @@ spec:
     serviceAccountName: pipeline
   params:
     - name: git-url
-      value: https://github.com/h8x0rd/ocp-gitops-pipelines.git
+      value: https://github.com/your-org/ocp-mqtt-demo.git
     - name: git-revision
       value: main
     - name: source-environment
