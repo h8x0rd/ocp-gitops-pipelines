@@ -1,0 +1,20 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: validate-kustomize-overlay
+spec:
+  params:
+    - name: repo-path
+      type: string
+    - name: environment
+      type: string
+  steps:
+    - name: validate
+      image: docker.io/bitnami/kubectl:1.31.2
+      script: |
+        #!/bin/sh
+        set -eu
+        OVERLAY="$(params.repo-path)/deploy/overlays/$(params.environment)"
+        test -d "$OVERLAY"
+        kubectl kustomize "$OVERLAY" >/dev/null
+        echo "Validated overlay: $OVERLAY"

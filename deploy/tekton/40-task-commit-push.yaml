@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-commit-and-push
+spec:
+  params:
+    - name: repo-path
+      type: string
+    - name: git-revision
+      type: string
+      default: main
+    - name: commit-message
+      type: string
+    - name: git-user-name
+      type: string
+      default: OpenShift Pipelines
+    - name: git-user-email
+      type: string
+      default: pipelines@example.invalid
+  steps:
+    - name: commit-push
+      image: docker.io/alpine/git:2.47.2
+      script: |
+        #!/bin/sh
+        set -eu
+        cd "$(params.repo-path)"
+        git config user.name "$(params.git-user-name)"
+        git config user.email "$(params.git-user-email)"
+        if git diff --quiet && git diff --cached --quiet; then
+          echo "No changes detected. Nothing to commit."
+          exit 0
+        fi
+        git add deploy/overlays/*/release.env
+        if git diff --cached --quiet; then
+          echo "No staged changes after add. Nothing to commit."
+          exit 0
+        fi
+        git commit -m "$(params.commit-message)"
+        git push origin HEAD:$(params.git-revision)

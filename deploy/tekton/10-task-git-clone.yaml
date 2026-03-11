@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-clone-repo
+spec:
+  params:
+    - name: git-url
+      type: string
+    - name: git-revision
+      type: string
+      default: main
+  workspaces:
+    - name: source
+  results:
+    - name: repo-path
+      description: Absolute path to the checked-out repository.
+  steps:
+    - name: clone
+      image: docker.io/alpine/git:2.47.2
+      script: |
+        #!/bin/sh
+        set -eu
+        cd "$(workspaces.source.path)"
+        rm -rf repo
+        git clone --branch "$(params.git-revision)" "$(params.git-url)" repo
+        printf '%s' "$(workspaces.source.path)/repo" > "$(results.repo-path.path)"

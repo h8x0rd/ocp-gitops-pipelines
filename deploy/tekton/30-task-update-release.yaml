@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: update-release-file
+spec:
+  params:
+    - name: repo-path
+      type: string
+    - name: source-environment
+      type: string
+    - name: target-environment
+      type: string
+    - name: release-id
+      type: string
+      default: ""
+    - name: promoted-by
+      type: string
+      default: tekton
+  results:
+    - name: effective-release-id
+      description: Release ID written to the target environment.
+  steps:
+    - name: update
+      image: docker.io/alpine:3.20
+      script: |
+        #!/bin/sh
+        set -eu
+        REPO="$(params.repo-path)"
+        SRC="$REPO/deploy/overlays/$(params.source-environment)/release.env"
+        DST="$REPO/deploy/overlays/$(params.target-environment)/release.env"
+        test -f "$SRC"
+        test -f "$DST"
+
+        SRC_RELEASE=$(awk -F= '/^DEMO_RELEASE_ID=/{print $2}' "$SRC" | tail -n1)
+        EFFECTIVE_RELEASE="$(params.release-id)"
+        if [ -z "$EFFECTIVE_RELEASE" ]; then
+          EFFECTIVE_RELEASE="$SRC_RELEASE"
+        fi
+        [ -n "$EFFECTIVE_RELEASE" ]
+        NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        printf 'DEMO_ENV=%s\nDEMO_RELEASE_ID=%s\nPROMOTED_FROM=%s\nPROMOTED_AT=%s\nPROMOTED_BY=%s\n' \
+          "$(params.target-environment)" \
+          "$EFFECTIVE_RELEASE" \
+          "$(params.source-environment)" \
+          "$NOW" \
+          "$(params.promoted-by)" > "$DST"
+        printf '%s' "$EFFECTIVE_RELEASE" > "$(results.effective-release-id.path)"
+        echo "Updated $DST with release $EFFECTIVE_RELEASE"

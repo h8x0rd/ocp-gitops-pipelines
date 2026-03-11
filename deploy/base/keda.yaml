@@ -1,0 +1,206 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: worker-a-jobs
+spec:
+  pollingInterval: 5
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  rollout:
+    strategy: default
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: 0
+    template:
+      metadata:
+        labels:
+          app: worker-a
+          demo.component: queue-worker
+          demo.broker: broker-a
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: worker
+            image: docker.io/node:20-alpine
+            command: ['node', '/opt/demo/worker.js']
+            env:
+              - name: BROKER_NAME
+                value: broker-a
+              - name: MQTT_HOST
+                value: broker-a
+              - name: MQTT_PORT
+                value: '1883'
+              - name: POD_NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+              - name: PROCESS_DELAY_MS
+                value: '2000'
+              - name: STARTUP_DELAY_MS
+                value: '500'
+              - name: JOB_BATCH_SIZE
+                value: '10'
+              - name: HEARTBEAT_SECONDS
+                value: '30'
+            volumeMounts:
+              - name: worker-script
+                mountPath: /opt/demo
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+        volumes:
+          - name: worker-script
+            configMap:
+              name: worker-script
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.default.svc.cluster.local:6379
+        listName: queue:broker-a
+        listLength: '3'
+        activationListLength: '1'
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: worker-b-jobs
+spec:
+  pollingInterval: 5
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  rollout:
+    strategy: default
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: 0
+    template:
+      metadata:
+        labels:
+          app: worker-b
+          demo.component: queue-worker
+          demo.broker: broker-b
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: worker
+            image: docker.io/node:20-alpine
+            command: ['node', '/opt/demo/worker.js']
+            env:
+              - name: BROKER_NAME
+                value: broker-b
+              - name: MQTT_HOST
+                value: broker-b
+              - name: MQTT_PORT
+                value: '1883'
+              - name: POD_NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+              - name: PROCESS_DELAY_MS
+                value: '2000'
+              - name: STARTUP_DELAY_MS
+                value: '2000'
+              - name: JOB_BATCH_SIZE
+                value: '10'
+              - name: HEARTBEAT_SECONDS
+                value: '30'
+            volumeMounts:
+              - name: worker-script
+                mountPath: /opt/demo
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+        volumes:
+          - name: worker-script
+            configMap:
+              name: worker-script
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.default.svc.cluster.local:6379
+        listName: queue:broker-b
+        listLength: '3'
+        activationListLength: '1'
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: worker-c-jobs
+spec:
+  pollingInterval: 5
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 1
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  rollout:
+    strategy: default
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: 0
+    template:
+      metadata:
+        labels:
+          app: worker-c
+          demo.component: queue-worker
+          demo.broker: broker-c
+      spec:
+        restartPolicy: Never
+        containers:
+          - name: worker
+            image: docker.io/node:20-alpine
+            command: ['node', '/opt/demo/worker.js']
+            env:
+              - name: BROKER_NAME
+                value: broker-c
+              - name: MQTT_HOST
+                value: broker-c
+              - name: MQTT_PORT
+                value: '1883'
+              - name: POD_NAMESPACE
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.namespace
+              - name: PROCESS_DELAY_MS
+                value: '2000'
+              - name: STARTUP_DELAY_MS
+                value: '2000'
+              - name: JOB_BATCH_SIZE
+                value: '10'
+              - name: HEARTBEAT_SECONDS
+                value: '30'
+            volumeMounts:
+              - name: worker-script
+                mountPath: /opt/demo
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+        volumes:
+          - name: worker-script
+            configMap:
+              name: worker-script
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.default.svc.cluster.local:6379
+        listName: queue:broker-c
+        listLength: '3'
+        activationListLength: '1'

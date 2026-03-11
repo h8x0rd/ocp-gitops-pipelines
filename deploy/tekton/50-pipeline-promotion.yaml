@@ -1,0 +1,91 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: promote-demo-release
+spec:
+  params:
+    - name: git-url
+      type: string
+    - name: git-revision
+      type: string
+      default: main
+    - name: source-environment
+      type: string
+      default: dev
+    - name: target-environment
+      type: string
+      default: test
+    - name: release-id
+      type: string
+      default: ""
+    - name: promoted-by
+      type: string
+      default: tekton
+    - name: git-user-name
+      type: string
+      default: OpenShift Pipelines
+    - name: git-user-email
+      type: string
+      default: pipelines@example.invalid
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: clone
+      taskRef:
+        name: git-clone-repo
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: git-url
+          value: $(params.git-url)
+        - name: git-revision
+          value: $(params.git-revision)
+    - name: validate-source
+      runAfter: [clone]
+      taskRef:
+        name: validate-kustomize-overlay
+      params:
+        - name: repo-path
+          value: $(tasks.clone.results.repo-path)
+        - name: environment
+          value: $(params.source-environment)
+    - name: write-target-release
+      runAfter: [validate-source]
+      taskRef:
+        name: update-release-file
+      params:
+        - name: repo-path
+          value: $(tasks.clone.results.repo-path)
+        - name: source-environment
+          value: $(params.source-environment)
+        - name: target-environment
+          value: $(params.target-environment)
+        - name: release-id
+          value: $(params.release-id)
+        - name: promoted-by
+          value: $(params.promoted-by)
+    - name: validate-target
+      runAfter: [write-target-release]
+      taskRef:
+        name: validate-kustomize-overlay
+      params:
+        - name: repo-path
+          value: $(tasks.clone.results.repo-path)
+        - name: environment
+          value: $(params.target-environment)
+    - name: push-change
+      runAfter: [validate-target]
+      taskRef:
+        name: git-commit-and-push
+      params:
+        - name: repo-path
+          value: $(tasks.clone.results.repo-path)
+        - name: git-revision
+          value: $(params.git-revision)
+        - name: git-user-name
+          value: $(params.git-user-name)
+        - name: git-user-email
+          value: $(params.git-user-email)
+        - name: commit-message
+          value: Promote $(tasks.write-target-release.results.effective-release-id) from $(params.source-environment) to $(params.target-environment)

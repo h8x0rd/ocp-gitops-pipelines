@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mqtt-demo-prod
+resources:
+  - ../../base
+commonAnnotations:
+  demo.environment: prod
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: demo-release
+    envs:
+      - release.env
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: api
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/2/value
+        value: redis://redis.mqtt-demo-prod.svc.cluster.local:6379
+  - target:
+      group: keda.sh
+      version: v1alpha1
+      kind: ScaledJob
+      name: worker-a-jobs
+    patch: |-
+      - op: replace
+        path: /spec/triggers/0/metadata/address
+        value: redis.mqtt-demo-prod.svc.cluster.local:6379
+      - op: replace
+        path: /spec/triggers/0/metadata/activationListLength
+        value: "1"
+  - target:
+      group: keda.sh
+      version: v1alpha1
+      kind: ScaledJob
+      name: worker-b-jobs
+    patch: |-
+      - op: replace
+        path: /spec/triggers/0/metadata/address
+        value: redis.mqtt-demo-prod.svc.cluster.local:6379
+      - op: replace
+        path: /spec/triggers/0/metadata/activationListLength
+        value: "1"
+  - target:
+      group: keda.sh
+      version: v1alpha1
+      kind: ScaledJob
+      name: worker-c-jobs
+    patch: |-
+      - op: replace
+        path: /spec/triggers/0/metadata/address
+        value: redis.mqtt-demo-prod.svc.cluster.local:6379
+      - op: replace
+        path: /spec/triggers/0/metadata/activationListLength
+        value: "1"

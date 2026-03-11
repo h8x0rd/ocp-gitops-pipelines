@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: promote-test-to-prod-
+spec:
+  pipelineRef:
+    name: promote-demo-release
+  taskRunTemplate:
+    serviceAccountName: pipeline
+  params:
+    - name: git-url
+      value: https://github.com/your-org/ocp-mqtt-demo.git
+    - name: git-revision
+      value: main
+    - name: source-environment
+      value: test
+    - name: target-environment
+      value: prod
+    - name: promoted-by
+      value: demo-operator
+  workspaces:
+    - name: shared-workspace
+      persistentVolumeClaim:
+        claimName: tekton-workspace
